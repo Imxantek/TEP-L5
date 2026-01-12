@@ -31,6 +31,7 @@ CTree& CTree::operator=(CTree&& pcOther) noexcept {
         dict = std::move(pcOther.dict);
         pcOther.root = nullptr;
     }
+	std::cout << "move assignment operator called\n";
     return *this;
 }
 
@@ -67,7 +68,7 @@ CTree CTree::operator+(const CTree& pcOther) const {
         }
     }
     result.scanDict(result.root);
-    return result;
+    return std::move(result);
 }
 
 
