@@ -1,0 +1,370 @@
+#include<iostream>
+#include<string>
+#include<queue>
+#include<vector>
+#include<cmath>
+#include"CTree.h"
+CTree::CTree() {
+    root = nullptr;
+}
+
+CTree::CTree(const CTree& pcOther) {
+    root = cloneSubtree(pcOther.root);
+}
+
+CTree::~CTree() {
+    delete root;
+}
+
+CTree& CTree::operator=(CTree&& pcOther) {
+    if (this != &pcOther) {
+        delete root;
+        root = pcOther.root;
+        dict = std::move(pcOther.dict);
+        pcOther.root = nullptr;
+    }
+    return *this;
+}
+
+CTree& CTree::operator=(const CTree& pcOther) {
+    if (this != &pcOther) {
+        delete root;
+        root = cloneSubtree(pcOther.root);
+        dict = pcOther.dict;
+    }
+    return *this;
+}
+
+CTree CTree::operator+(const CTree& pcOther) const {
+    CTree result;
+    result.root = cloneSubtree(this->root);
+
+    if (result.root == nullptr) {
+        result.root = cloneSubtree(pcOther.root);
+        return result;
+    }
+    CNode* leafToReplace = deepestLeft(result.root);
+
+    if (leafToReplace == nullptr) {
+        delete result.root;
+        result.root = cloneSubtree(pcOther.root);
+    }
+    else {
+        CNode* otherRoot = pcOther.root;
+        if (otherRoot) {
+            leafToReplace->setVal(otherRoot->getVal());
+            for (int i = 0; i < otherRoot->childCount(); i++) {
+                leafToReplace->addChild(cloneSubtree(otherRoot->getChild(i)));
+            }
+        }
+    }
+    result.scanDict(result.root);
+    return result;
+}
+
+
+int CTree::arityOf(const std::string& token) const {
+    if (token == "+" || token == "-" || token == "*" || token == "/") return 2;
+    if (token == "sin" || token == "cos") return 1;
+    return 0;
+}
+void CTree::scanDict(CNode* node) {
+    if (!node) {
+        return;
+    }
+    int ar = arityOf(node->getVal());
+    if (ar == 0) {
+        dict[node->getVal()] = -1;
+    }
+    for (int i = 0; i < node->childCount(); i++) {
+        scanDict(node->getChild(i));
+    }
+}
+
+std::string CTree::getToken(std::string& exp, int& pos) {
+    while (pos < exp.length() && exp[pos] == ' ') {
+        pos++;
+    }
+    if (pos >= exp.length()) {
+        return "";
+    }
+    std::string token = "";
+    while (pos < exp.length() && exp[pos] != ' ') {
+        token = token + exp[pos];
+        pos++;
+    }
+    return token;
+}
+
+CNode* CTree::parse(std::string& exp, int& pos) {
+    std::string token = getToken(exp, pos);
+    std::cout << token << " ";
+    int ar = arityOf(token);
+    if (ar == 0) {
+        dict[token] = -1;
+        return new CNode(token);
+    }
+    else if (ar > 0) {
+        CNode* node = new CNode(token);
+        for (int i = 0; i < ar; i++) {
+            CNode* child = parse(exp, pos);
+            node->addChild(child);
+        }
+        return node;
+    }
+    return nullptr;
+}
+
+
+CResult<CTree*, CError> CTree::enter(std::string& exp) {
+    dict.clear();
+    std::string fixed;
+    int requiredOperands = 1;
+    int operands = 0;
+    int pos = 0;
+    while (pos < exp.length()) {
+        std::string token = getToken(exp, pos);
+        int ar = arityOf(token);
+        if (ar == 0) {
+            operands++;
+        }
+        else if (ar > 0) {
+            requiredOperands += (ar - 1);
+        }
+        fixed += (token + " ");
+    }
+    if (operands < requiredOperands) {
+		return CResult<CTree*, CError>::cFail(new CError("Not enough operands"));
+    }
+    else if (operands > requiredOperands) {
+		return CResult<CTree*, CError>::cFail(new CError("Too many operands"));
+    }
+    std::cout << "Processed expression:\n ";
+    pos = 0;
+    root = parse(fixed, pos);
+    std::cout << std::endl;
+    return CResult<CTree*, CError>::cOk(this);
+}
+
+
+
+CResult<CTree*, CError> CTree::join(std::string& exp) {
+    CTree newTree;
+    CResult<CTree*, CError> res = newTree.enter(exp);
+    if (!res.bIsSuccess()) {
+        return res;
+    }
+
+    *this = *this + newTree;
+    std::cout << "New tree:\n";
+    print();
+	return CResult<CTree*, CError>::cOk(this);
+}
+
+CNode* CTree::cloneSubtree(CNode* node) const {
+    if (!node) return nullptr;
+    CNode* n = new CNode(node->getVal());
+    for (int i = 0; i < node->childCount(); i++) {
+        n->addChild(cloneSubtree(node->getChild(i)));
+    }
+    return n;
+}
+
+CNode* CTree::deepestLeft(CNode* node) const {
+    if (!node) return nullptr;
+    if (node->childCount() == 0) return node;
+    return deepestLeft(node->getChild(0));
+}
+
+bool CTree::isNumber(const std::string& s) {
+    if (s.empty()) return false;
+    int start = 0;
+    if (s[0] == '-') start = 1;
+    for (int i = start; i < s.length(); ++i) {
+        if (!isdigit(s[i])) return false;
+    }
+    return true;
+}
+
+CResult<void, CError> CTree::vars() {
+    dict.clear();
+    scanDict(root);
+
+    // Sprawdü czy istnieje przynajmniej jedna zmienna (nie-numeryczny klucz)
+    bool hasVariable = false;
+    for (const auto& kv : dict) {
+        if (!isNumber(kv.first)) {
+            hasVariable = true;
+            break;
+        }
+    }
+
+    if (!hasVariable) {
+        return CResult<void, CError>::cFail(new CError("No variables in this equation."));
+    }
+
+    std::cout << "Variables used in this equation:\n";
+    for (std::map<std::string, int>::iterator it = dict.begin(); it != dict.end(); ++it) {
+        if (!isNumber(it->first)) {
+            std::cout << it->first << " ";
+        }
+    }
+    std::cout << std::endl;
+	return CResult<void, CError>::cOk();
+}
+
+CResult<void, CError> CTree::runSurvey(CNode* node, std::vector<int>* vec) {
+    if (node == nullptr) {
+        return CResult<void, CError>::cOk();
+    }
+    std::string key = node->getVal();
+    int ar = arityOf(key);
+    if (ar == 0) {
+        bool isVariable = false;
+        for (int i = 0; i < key.size(); i++) {
+            if ((key[i] < '0' || key[i]>'9') && key[i] != '-') {
+                isVariable = true;
+                break;
+            }
+        }
+        if (isVariable) {
+            if (vec->size() != 0) {
+                dict[key] = vec->front();
+                vec->erase(vec->begin());
+            }
+            else {
+				return CResult<void, CError>::cFail(new CError("Not enough variable assignments provided"));
+            }
+        }
+        else {
+            dict[key] = std::stoi(key);
+        }
+    }
+    for (int i = 0; i < node->childCount(); i++) {
+        CResult<void, CError> res = runSurvey(node->getChild(i), vec);
+        if (!res.bIsSuccess()) {
+            return res;
+        }
+    }
+	return CResult<void, CError>::cOk();
+}
+
+CResult<void,CError> CTree::comp(std::vector<int> vec) {
+    dict.clear();
+    CResult<void, CError> surveyResult = runSurvey(root, &vec);
+    if (!surveyResult.bIsSuccess()) {
+        return surveyResult;
+    }
+    if (vec.size() != 0) {
+		return CResult<void, CError>::cFail(new CError("Too many variable assignments provided"));
+        
+    }
+	CResult<double, CError> res=calculateValue(root);
+    if (res.bIsSuccess()) {
+        std::cout << "Value of entered equation:\n" << res.cGetValue() << std::endl;
+        return CResult<void, CError>::cOk();
+    }
+    else {
+		return CResult<void, CError>::cFail(res.vGetErrors());
+    }
+}
+
+CResult<double, CError> CTree::calculateValue(CNode* node) const {
+    if (node == nullptr) {
+        return CResult<double, CError>::cOk(0.0);
+    }
+    std::string token = node->getVal();
+    int ar = arityOf(token);
+    if (ar > 0) {
+        CResult<double, CError> left = calculateValue(node->getChild(0));
+        if (!left.bIsSuccess()) {
+            return CResult<double, CError>::cFail(left.vGetErrors());
+        }
+        double a = left.cGetValue();
+        if (node->getVal() == "sin") {
+            return CResult<double, CError>::cOk(sin(a));
+        }
+        if (node->getVal() == "cos") {
+            return CResult<double, CError>::cOk(cos(a));
+        }
+        CResult<double, CError> right = calculateValue(node->getChild(1));
+        if (!right.bIsSuccess()) {
+            return CResult<double, CError>::cFail(right.vGetErrors());
+        }
+        double b = right.cGetValue();
+        if (token == "+") {
+            return CResult<double, CError>::cOk(a + b);
+        }
+        if (token == "-") {
+            return CResult<double, CError>::cOk(a - b);
+        }
+        if (token == "*") {
+            return CResult<double, CError>::cOk(a * b);
+        }
+        if (token == "/") {
+            if (b == 0) {
+                return CResult<double, CError>::cFail(new CError("Division by zero"));
+            }
+            else {
+                return CResult<double, CError>::cOk(a / b);
+            }
+        }
+    }
+    else {
+        if (dict.find(node->getVal()) != dict.end()) {
+            return CResult<double, CError>::cOk(dict.at(node->getVal()));
+        }
+        else {
+            return CResult<double, CError>::cFail(new CError("Variable not assigned a value"));
+        }
+    }
+    return CResult<double, CError>::cFail(new CError("Unknown variable"));
+}
+CNode* CTree::getRoot() const {
+    return root;
+}
+
+CResult<void, CError> CTree::print() const {
+    if(root== nullptr) {
+		return CResult<void, CError>::cFail(new CError("Tree is empty"));
+	}
+    print(root);
+    return CResult<void, CError>::cOk();
+}
+void CTree::print(CNode* node) const {
+    if (!node) {
+        return;
+    }
+    std::cout << node->getVal() << " ";
+    for (int i = 0; i < node->childCount(); i++) {
+        print(node->getChild(i));
+    }
+
+}
+
+std::string CTree::toString() const {
+    return toString(root);
+}
+std::string CTree::toString(CNode* node) const {
+    if (!node) {
+        return "";
+    }
+    std::string result = node->getVal() + " ";
+    for (int i = 0; i < node->childCount(); i++) {
+        result += toString(node->getChild(i));
+    }
+    return result;
+}
+
+bool CTree::containsVars() {
+    for (std::map<std::string, int>::iterator it = dict.begin(); it != dict.end(); ++it) {
+        std::string key = it->first;
+        for (int i = 0; i < key.length(); i++) {
+            if ((key[i] < '0' || key[i] > '9') && key[i] != '-') {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+//
