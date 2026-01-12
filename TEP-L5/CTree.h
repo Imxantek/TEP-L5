@@ -17,8 +17,9 @@ public:
 	CTree();
 	CTree(const CTree& pcOther);
 	~CTree();
+	CTree(CTree&& pcOther);
 
-	CTree& operator=(CTree&& pcOther);
+	CTree& operator=(CTree&& pcOther) noexcept;
 	CTree& operator=(const CTree& pcOther);
 	CTree operator+(const CTree& pcOther) const;
 

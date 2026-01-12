@@ -10,13 +10,21 @@ CTree::CTree() {
 
 CTree::CTree(const CTree& pcOther) {
     root = cloneSubtree(pcOther.root);
+	std::cout << "copy constructor called\n";
 }
 
 CTree::~CTree() {
     delete root;
 }
 
-CTree& CTree::operator=(CTree&& pcOther) {
+CTree::CTree(CTree&& pcOther) {
+    root = pcOther.root;
+    dict = std::move(pcOther.dict);
+	std::cout << "move constructor called\n";
+    pcOther.root = nullptr;
+}
+
+CTree& CTree::operator=(CTree&& pcOther) noexcept {
     if (this != &pcOther) {
         delete root;
         root = pcOther.root;
