@@ -20,8 +20,8 @@ CTree::~CTree() {
 CTree::CTree(CTree&& pcOther) {
     root = pcOther.root;
     dict = std::move(pcOther.dict);
-	std::cout << "move constructor called\n";
     pcOther.root = nullptr;
+    std::cout << "move constructor called\n";
 }
 
 CTree& CTree::operator=(CTree&& pcOther) noexcept {
@@ -45,6 +45,32 @@ CTree& CTree::operator=(const CTree& pcOther) {
 }
 
 CTree CTree::operator+(const CTree& pcOther) const {
+    CTree result;
+    result.root = cloneSubtree(this->root);
+
+    if (result.root == nullptr) {
+        result.root = cloneSubtree(pcOther.root);
+        return result;
+    }
+    CNode* leafToReplace = deepestLeft(result.root);
+
+    if (leafToReplace == nullptr) {
+        delete result.root;
+        result.root = cloneSubtree(pcOther.root);
+    }
+    else {
+        CNode* otherRoot = pcOther.root;
+        if (otherRoot) {
+            leafToReplace->setVal(otherRoot->getVal());
+            for (int i = 0; i < otherRoot->childCount(); i++) {
+                leafToReplace->addChild(cloneSubtree(otherRoot->getChild(i)));
+            }
+        }
+    }
+    result.scanDict(result.root);
+    return result;
+}
+CTree CTree::operator+(CTree&& pcOther) const noexcept{
     CTree result;
     result.root = cloneSubtree(this->root);
 

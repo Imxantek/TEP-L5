@@ -22,6 +22,7 @@ public:
 	CTree& operator=(CTree&& pcOther) noexcept;
 	CTree& operator=(const CTree& pcOther);
 	CTree operator+(const CTree& pcOther) const;
+	CTree operator+(CTree&& pcOther) const noexcept;
 
 	std::string toString() const;
 	std::string toString(CNode* node) const;
