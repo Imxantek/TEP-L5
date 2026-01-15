@@ -28,7 +28,7 @@ void testMoveSemantics() {
     tree2.enter(exp2);
 
     std::cout << "--- TEST DODAWANIA ---\n";
-    CTree tree3 = tree1 + std::move(tree2);
+    CTree tree3 = std::move(tree1 + tree2);
 
     std::cout << "\n--- WYNIK DODAWANIA ---\n";
     tree3.print();

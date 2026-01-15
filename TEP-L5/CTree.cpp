@@ -38,25 +38,26 @@ CTree& CTree::operator=(CTree&& pcOther) noexcept {
 CTree& CTree::operator=(const CTree& pcOther) {
     if (this != &pcOther) {
         delete root;
-        root = cloneSubtree(pcOther.root);
+        root = CTree(pcOther).root;
         dict = pcOther.dict;
     }
+    std::cout << "copy assignment operator called\n";
     return *this;
 }
 
 CTree CTree::operator+(const CTree& pcOther) const {
-    CTree result;
-    result.root = cloneSubtree(this->root);
+    CTree result(*this);
+    /*result.root = cloneSubtree(this->root);*/
 
     if (result.root == nullptr) {
-        result.root = cloneSubtree(pcOther.root);
+        result.root = CTree(pcOther).root;
         return result;
     }
     CNode* leafToReplace = deepestLeft(result.root);
 
     if (leafToReplace == nullptr) {
         delete result.root;
-        result.root = cloneSubtree(pcOther.root);
+        result.root = CTree(pcOther).root;
     }
     else {
         CNode* otherRoot = pcOther.root;
@@ -69,34 +70,6 @@ CTree CTree::operator+(const CTree& pcOther) const {
     }
     result.scanDict(result.root);
     return result;
-}
-CTree CTree::operator+(CTree&& pcOther) const noexcept {
-    CTree result;
-    result.root = cloneSubtree(this->root);
-
-    if (result.root == nullptr) {
-        result.root = pcOther.root; 
-        pcOther.root = nullptr;     
-        return std::move(result);
-    }
-
-    CNode* leafToReplace = deepestLeft(result.root);
-
-    if (leafToReplace == nullptr) {
-        delete result.root;
-        result.root = pcOther.root; 
-        pcOther.root = nullptr;     
-    }
-    else {
-        CNode* otherRoot = pcOther.root;
-        if (otherRoot) {
-            leafToReplace->setVal(otherRoot->getVal());
-            otherRoot->moveChildrenTo(leafToReplace);
-        }
-    }
-
-    result.scanDict(result.root);
-    return std::move(result);
 }
 
 

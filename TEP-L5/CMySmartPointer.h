@@ -5,9 +5,11 @@ class CMySmartPointer {
 public:
 	CMySmartPointer(T* pc_pointer);
 	CMySmartPointer(const CMySmartPointer& pcOther);
+	CMySmartPointer(CMySmartPointer&& pcOther);
 	~CMySmartPointer();
 	T& operator*();
 	T* operator->();
+	CMySmartPointer& operator=(CMySmartPointer&& pcOther) noexcept;
 	CMySmartPointer& operator=(const CMySmartPointer& pcOther);
 private:
 	T* pc_pointer;

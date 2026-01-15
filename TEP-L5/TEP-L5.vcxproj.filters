@@ -33,12 +33,18 @@
     <ClInclude Include="CTree.h">
       <Filter>Pliki nagłówkowe</Filter>
     </ClInclude>
+    <ClInclude Include="MyUniquePointer.h">
+      <Filter>Pliki nagłówkowe</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="CMySmartPointer.tpp">
       <Filter>Pliki nagłówkowe</Filter>
     </None>
     <None Include="CResult.tpp">
+      <Filter>Pliki nagłówkowe</Filter>
+    </None>
+    <None Include="MyUniquePointer.tpp">
       <Filter>Pliki nagłówkowe</Filter>
     </None>
   </ItemGroup>

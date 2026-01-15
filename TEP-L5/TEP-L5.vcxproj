@@ -129,10 +129,12 @@
     <ClInclude Include="CRefCounter.h" />
     <ClInclude Include="CResult.h" />
     <ClInclude Include="CTree.h" />
+    <ClInclude Include="MyUniquePointer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CMySmartPointer.tpp" />
     <None Include="CResult.tpp" />
+    <None Include="MyUniquePointer.tpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CError.cpp" />
