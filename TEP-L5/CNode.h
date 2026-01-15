@@ -12,6 +12,7 @@ public:
 	CNode(const CNode& pcOther);
 	~CNode();
 	void setVal(const std::string& v);
+	void moveChildrenTo(CNode* pcOtherNode);
 	const std::string& getVal() const;
 
 	void addChild(CNode* child);

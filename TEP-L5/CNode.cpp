@@ -56,7 +56,9 @@ CNode* CNode::getChild(int idx) const {
 int CNode::childCount() const {
 	return children.size();
 }
-
-
-
-//
+void CNode::moveChildrenTo(CNode* pcOtherNode) {
+	for (int i = 0; i < children.size(); i++) {
+		pcOtherNode->addChild(children[i]);
+	}
+	children.clear();
+}
